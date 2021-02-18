@@ -1,3 +1,38 @@
+parallel_overlap_type <- function(gr1, gr2) {
+  # Decisions are interpreted from the gr2 perspective:
+  #   "up" = gr2 overlaps 5' end of gr1;
+  #   "down" = gr2 overlaps 3' end of gr1;
+  #   "inside" = gr2 is within gr1;
+  #   "contains" = gr2 includes gr1;
+  #   "exact" = gr2 and gr1 are equal;
+  #   "no_up" = no overlap, gr2 is upstream of gr1;
+  #   "no_down" = no overlap, gr2 is downstream of gr1;
+  stopifnot(length(gr1) == length(gr2)) # gr1 and gr2 are expected to be parallel
+  stopifnot(all(strand(gr1) %in% c("+", "-"))) # All intervals in gr1 are expected to have strand info. Strandness of gr2 is not taken into account.
+  out <- vector("character", length(gr1))
+  a <- start(gr2) <= start(gr1) & end(gr2) < end(gr1) & end(gr2) >= start(gr1) # gr2 overlaps the beginning of gr1
+  b <- start(gr2) >= start(gr1) & end(gr2) <= end(gr1) # gr2 is within (inside of) gr1
+  c <- start(gr2) > start(gr1) & end(gr2) >= end(gr1) & start(gr2) <= end(gr1) # gr2 overlaps the end of gr1
+  d <- start(gr2) <= start(gr1) & end(gr2) >= end(gr1) # gr2 includes (contains) gr1
+  e <- start(gr2) == start(gr1) & end(gr2) == end(gr1)
+  b[e] <- FALSE
+  d[e] <- FALSE
+  f <- end(gr2) < start(gr1) # no overlap
+  g <- start(gr2) > end(gr1)
+  no_up <- ifelse(strand(gr1) == "+", f, g)
+  no_down <- ifelse(strand(gr1) == "+", g, f)
+  out[no_up] <- "no_up"
+  out[no_down] <- "no_down"
+  up <- ifelse(strand(gr1) == "+", a, c)
+  down <- ifelse(strand(gr1) == "+", c, a)
+  out[up] <- "up"
+  out[down] <- "down"
+  out[b] <- "inside"
+  out[d] <- "contains"
+  out[e] <- "exact"
+  return(as.factor(out))
+}
+
 trim_by_down_or_upstream_features <- function(windows, features, mode = "down", offset = 10, ignore.strand = FALSE, check_parent = TRUE, trim_to_zero_width = TRUE) {
   stopifnot(mode %in% c("down", "up"))
   old_names <- names(windows)
@@ -28,7 +63,7 @@ trim_by_down_or_upstream_features <- function(windows, features, mode = "down", 
   } else {
     out2 <- win_rem[NULL]
   }
-  over_type <- parallelOverlapType(win_par, feat_par) # detect the type of overlap
+  over_type <- parallel_overlap_type(win_par, feat_par) # detect the type of overlap
   if (mode == "down") {
     #bad <- as.logical(tapply(over_type, list(mcols(win_par)$orig_order), function(x) { any(x == "up") | any(x == "contains") }))
     bad <- as.logical(BiocGenerics::tapply(over_type, list(S4Vectors::mcols(win_par)$orig_order), function(x) { any(x %in% c("up", "contains", "exact", "no_down")) }))

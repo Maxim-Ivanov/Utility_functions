@@ -8,7 +8,7 @@ find_all_introns <- function(ebg, verbose = FALSE) {
   old_names <- names(ebg)
   names(ebg) <- 1:length(ebg)
   # Divide the input ebg into genes with and without overlapping exons:
-  over <- lengths(GenomicRanges::reduce(ebg)) != lengths(disjoin(ebg))
+  over <- elementNROWS(GenomicRanges::reduce(ebg)) != elementNROWS(disjoin(ebg))
   grl0 <- ebg[!over]
   grl <- ebg[over]
   if (verbose == TRUE) {

@@ -10,8 +10,8 @@ smoothVector <- function(vec, method, degree) {
 }
 
 draw_metagene_plot <- function(mat_list, drawCI=TRUE, x.axis=FALSE, title = "Metagene_plot", filename = NULL, xlabel = "Intervals of interest", 
-                             ylabel = "Average signal", vline = FALSE, hline = FALSE, linetype = "solid", width = NA, height = NA, units = "cm", plotPDF = TRUE, scale.plot = NA, 
-                             alpha = 1, alpha_CI = 0.25, ylim = NA, smoothing = FALSE, method = "tukey", degree = NA, custom.colors = NA, out_dir = ".") {
+                             ylabel = "Average signal", vline = FALSE, hline = FALSE, linetype = "solid", width = NA, height = NA, units = "cm", plotPDF = TRUE, 
+                             scale.plot = NA, alpha = 1, alpha_CI = 0.25, ylim = NA, smoothing = FALSE, method = "tukey", degree = NA, custom.colors = NA, out_dir = ".") {
   library(ggplot2)
   if (identical(x.axis, FALSE)) {
     x.axis <- seq_len(ncol(mat_list[[1]]))

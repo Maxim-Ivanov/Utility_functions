@@ -9,7 +9,10 @@
 # It is highly recommended to pass a valid seqinfo object to the
 # function call;
 
-batch_read_track_data <- function(filenames, dir=".", format=NULL, strand="*", seqinfo=NULL) {
+batch_read_track_data <- function(filenames, dir = ".", format = NULL, strand = "*", seqinfo = NULL) {
+  if (format == "bedGraph" && (is.null(seqinfo) || class(seqinfo) != "Seqinfo")) {
+    stop("Need a valid Seqinfo object when importing Bedgraph files!")
+  }
   require(rtracklayer)
   output <- vector("list", length(filenames))
   for (i in seq_along(filenames)) {
@@ -19,13 +22,13 @@ batch_read_track_data <- function(filenames, dir=".", format=NULL, strand="*", s
       if (is.null(seqinfo)) {
         gr <- trim(import(file.path(dir, fn)))
       } else {
-        gr <- trim(import(file.path(dir, fn), seqinfo=seqinfo))
+        gr <- trim(import(file.path(dir, fn), seqinfo = seqinfo))
       }
     } else {
       if (is.null(seqinfo)) {
-        gr <- trim(import(file.path(dir, fn), format=format))
+        gr <- trim(import(file.path(dir, fn), format = format))
       } else {
-        gr <- trim(import(file.path(dir, fn), format=format, seqinfo=seqinfo))
+        gr <- trim(import(file.path(dir, fn), format = format, seqinfo = seqinfo))
       }
     }
     if (any(score(gr) < 0)) {

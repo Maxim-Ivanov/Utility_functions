@@ -12,7 +12,7 @@ merge_and_normalize_GRanges <- function(x, norm = 1000000, precision = 6, min_su
       cov[sup > 0 & sup < min_support] <- 0
     }
     out <- bindAsGRanges(score = cov)
-    strand(out) <- "+"
+    strand(out) <- "*"
   } else {
     cov_fw <- lapply(x, function(x) { coverage(x[strand(x) == "+"], weight = "score") })
     cov_fw <- Reduce(`+`, cov_fw)

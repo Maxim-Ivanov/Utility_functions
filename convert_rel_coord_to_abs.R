@@ -41,7 +41,7 @@ convert_rel_coord_to_abs <- function(gr, ir) {
   abs_start <- convert_positions(start(ir), gr, cumw, str_gr)
   abs_end <- convert_positions(end(ir), gr, cumw, str_gr)
   # Construct output GRanges:
-  out <- GRanges(seqnames = chr_gr, IRanges(start = abs_start, end = abs_end), strand = str_gr, seqinfo = seqinfo(gr))
+  out <- GRanges(seqnames = chr_gr, IRanges(start = pmin(abs_start, abs_end), end = pmax(abs_start, abs_end)), strand = str_gr, seqinfo = seqinfo(gr))
   names(out) <- names(ir)
   mcols(out) <- mcols(ir)
   # Split ranges in out which overlap with gaps in gr (otherwise they will extend over introns):

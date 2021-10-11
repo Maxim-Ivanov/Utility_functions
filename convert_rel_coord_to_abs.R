@@ -69,3 +69,35 @@ convert_rel_coord_to_abs <- function(gr, ir) {
   }
   return(out)
 }
+
+##### Version 2 ------------------------------------------------------------------------------------
+# Advantage: many times faster than v1;
+# Disadvantage: returns GRanges (if relative interval starts in one exons and ends in another, the absolute interval will cross the exon-intron junctions);
+
+convert_positions_v2 <- function(tbl, rel_coord, len) {
+  tbl$rel_coord <- rep(rel_coord, times = len)
+  tbl <- tbl %>% 
+    mutate(cumw = cumsum(width) - width, offset = rel_coord - cumw) %>% 
+    dplyr::filter(offset >= 0) %>%
+    mutate(last = exon_rank == max(exon_rank)) %>%
+    dplyr::filter(last) %>% 
+    mutate(abs_coord = ifelse(strand == "+", start + offset - 1, end - offset + 1))
+  return(tbl)
+}
+
+convert_rel_coord_to_abs_v2 <- function(grl, ir, sorted_exons = TRUE) {
+  stopifnot(length(grl) == length(ir))
+  stopifnot(grepl("GRangesList", class(grl)) & class(ir) == "IRanges")
+  stopifnot("exon_rank" %in% colnames(mcols(unlist(grl))))
+  tbl <- grl %>% unlist() %>% as_tibble() %>% dplyr::select(-exon_id)
+  tbl$grp <- rep(1:length(grl), times = elementNROWS(grl))
+  tbl <- tbl %>% group_by(grp)
+  if (!isTRUE(sorted_exons)) {
+    # Ensure that exons within each group are sorted by increasing exon_rank:
+    tbl <- tbl %>% arrange(grp, exon_rank)
+  }
+  t1 <- convert_positions_v2(tbl, start(ir), elementNROWS(grl))
+  t2 <- convert_positions_v2(tbl, end(ir), elementNROWS(grl))
+  out <- GRanges(t1$seqnames, IRanges(pmin(t1$abs_coord, t2$abs_coord), end = pmax(t1$abs_coord, t2$abs_coord)), strand = t1$strand, seqinfo = seqinfo(grl))
+  return(out)
+}

@@ -88,11 +88,11 @@ convert_positions_v2 <- function(tbl, rel_coord, len) {
 convert_rel_coord_to_abs_v2 <- function(grl, ir, sorted_exons = TRUE) {
   stopifnot(length(grl) == length(ir))
   stopifnot(grepl("GRangesList", class(grl)) & class(ir) == "IRanges")
-  stopifnot("exon_rank" %in% colnames(mcols(unlist(grl))))
   tbl <- grl %>% unlist() %>% as_tibble() %>% dplyr::select(-exon_id)
   tbl$grp <- rep(1:length(grl), times = elementNROWS(grl))
   tbl <- tbl %>% group_by(grp)
   if (!isTRUE(sorted_exons)) {
+    stopifnot("exon_rank" %in% colnames(mcols(unlist(grl))))
     # Ensure that exons within each group are sorted by increasing exon_rank:
     tbl <- tbl %>% arrange(grp, exon_rank)
   }

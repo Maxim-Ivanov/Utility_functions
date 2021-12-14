@@ -87,6 +87,9 @@ convert_positions_v2 <- function(tbl, rel_coord, len) {
 
 convert_rel_coord_to_abs_v2 <- function(grl, ir, sorted_exons = TRUE) {
   stopifnot(length(grl) == length(ir))
+  if (class(grl) == "GRanges") {
+    grl <- as(grl, "CompressedGRangesList")
+  }
   stopifnot(grepl("GRangesList", class(grl)) & class(ir) == "IRanges")
   stopifnot("exon_rank" %in% colnames(mcols(unlist(grl))))
   tbl <- grl %>% unlist() %>% as_tibble()

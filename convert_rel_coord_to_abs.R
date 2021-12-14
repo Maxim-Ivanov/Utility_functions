@@ -89,7 +89,9 @@ convert_rel_coord_to_abs_v2 <- function(grl, ir, sorted_exons = TRUE) {
   stopifnot(length(grl) == length(ir))
   if (class(grl) == "GRanges") {
     mcols(grl)$exon_rank <- rep(1, length(grl))
-    grl <- as(grl, "CompressedGRangesList")
+    nms <- names(grl)
+    grl <- split(grl, 1:length(grl))
+    names(grl) <- nms
   }
   stopifnot(grepl("GRangesList", class(grl)) & class(ir) == "IRanges")
   stopifnot("exon_rank" %in% colnames(mcols(unlist(grl))))

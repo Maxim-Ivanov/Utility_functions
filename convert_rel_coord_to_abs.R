@@ -73,12 +73,16 @@ convert_rel_coord_to_abs <- function(gr, ir) {
 ##### Version 2 ------------------------------------------------------------------------------------
 # Advantage: many times faster than v1;
 # Disadvantage: returns GRanges (if relative interval starts in one exons and ends in another, the absolute interval will cross the exon-intron junctions);
+#   However, postprocessing with split_intervals_by_introns() can fix this issue;
+# 2022-03-09: found bug in convert_positions_v2() (when end coordinate of transcriptomic interval precisely concided with end coordinate of the relevant exons, 
+#   the output genomic interval was unreasonably extended along the whole next intron);
+#   The bug was fixed by changing "offset >= 0" to "offset > 0"
 
 convert_positions_v2 <- function(tbl, rel_coord, len) {
   tbl$rel_coord <- rep(rel_coord, times = len)
   tbl <- tbl %>% 
     mutate(cumw = cumsum(width) - width, offset = rel_coord - cumw) %>% 
-    dplyr::filter(offset >= 0) %>%
+    dplyr::filter(offset > 0) %>% 
     mutate(last = exon_rank == max(exon_rank)) %>%
     dplyr::filter(last) %>% 
     mutate(abs_coord = ifelse(strand == "+", start + offset - 1, end - offset + 1))
@@ -105,5 +109,12 @@ convert_rel_coord_to_abs_v2 <- function(grl, ir, sorted_exons = TRUE) {
   t1 <- convert_positions_v2(tbl, start(ir), elementNROWS(grl))
   t2 <- convert_positions_v2(tbl, end(ir), elementNROWS(grl))
   out <- GRanges(t1$seqnames, IRanges(pmin(t1$abs_coord, t2$abs_coord), end = pmax(t1$abs_coord, t2$abs_coord)), strand = t1$strand, seqinfo = seqinfo(grl))
+  return(out)
+}
+
+split_intervals_by_introns <- function(gr, grl) {
+  stopifnot(class(gr) == "GRanges" && grepl("GRangesList", class(grl)) && length(gr) == length(grl))
+  grl_gaps <- psetdiff(unlist(range(grl)), grl)
+  out <- psetdiff(gr, grl_gaps)
   return(out)
 }
